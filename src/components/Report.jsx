@@ -463,10 +463,13 @@ export default function Report({ attackId, agentOutputs, preloadedData, onReset 
           <AttestationLine
             hash={englishSections.attestation}
             pending={attestPending}
+            txHash={attack?.onchain_tx_hash}
+            explorerUrl={attack?.onchain_explorer_url}
+            network={attack?.onchain_network}
           />
         </div>
         <div className="footer-caption">
-          Cryptographic attestation. Tempo MPP integration on roadmap.
+          Every report attested on Tempo. Verifiable on-chain.
         </div>
         <div className="footer-build">
           Built on Hermes Agent + Kimi K2.5 + Tempo MPP
@@ -623,50 +626,62 @@ function AgentCollapse({ agent }) {
   );
 }
 
-function AttestationLine({ hash, pending }) {
+function AttestationLine({ hash, pending, txHash, explorerUrl, network }) {
   const [copied, setCopied] = useState(false);
 
-  const isReal = hash && hash !== 'N/A' && !/pending/i.test(hash);
-  const display = formatHashShort(hash);
+  const onchainAvailable = !!(txHash && explorerUrl);
+  const displayHash = onchainAvailable ? txHash : hash;
+  const isReal = displayHash && displayHash !== 'N/A' && !/pending/i.test(displayHash);
+  const display = formatHashShort(displayHash);
 
   const copy = async () => {
     if (!isReal) return;
     try {
-      await navigator.clipboard.writeText(hash);
+      await navigator.clipboard.writeText(displayHash);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch (_) {
-      window.prompt('Copy attestation:', hash);
+      window.prompt('Copy hash:', displayHash);
     }
   };
 
+  if (pending) {
+    return (
+      <span className="attestation-row">
+        <span>On-chain attestation:</span>
+        <span className="attest-pending">
+          <span className="status-dot pulsing" /> writing to chain...
+        </span>
+      </span>
+    );
+  }
+
   return (
     <span className="attestation-row">
-      <span>On-chain attestation:</span>
-      {pending ? (
-        <span className="attest-pending">
-          <span className="status-dot pulsing" /> generating…
-        </span>
+      <span>{onchainAvailable ? 'On-chain (Tempo):' : 'Attestation:'}</span>
+      {onchainAvailable ? (
+        <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="attest-link" title="View on Tempo">
+          <code>{display}</code>
+          <span className="attest-link-icon" aria-hidden="true">↗</span>
+        </a>
       ) : (
-        <>
-          <code title={hash || 'N/A'}>{display}</code>
-          {isReal && (
-            <button
-              className="copy-btn"
-              type="button"
-              onClick={copy}
-              title="Copy full hash"
-              aria-label="Copy attestation hash"
-            >
-              {copied ? '✓' : (
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <rect x="4" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                  <rect x="2.5" y="2.5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                </svg>
-              )}
-            </button>
+        <code title={displayHash || 'N/A'}>{display}</code>
+      )}
+      {isReal && (
+        <button
+          className="copy-btn"
+          type="button"
+          onClick={copy}
+          title="Copy full hash"
+          aria-label="Copy hash"
+        >
+          {copied ? '✓' : (
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="4" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+              <rect x="2.5" y="2.5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
           )}
-        </>
+        </button>
       )}
     </span>
   );
