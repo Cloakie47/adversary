@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { streamDebate, streamReplay, fetchAttack } from '../lib/debate.js';
+import ThemeToggle from './ThemeToggle.jsx';
 
 const ATTACKERS = [
   { id: 'attacker-skeptic',      name: 'Skeptic',      lane: 'Demand' },
@@ -267,6 +268,7 @@ export default function Processing({
             <span className="meta-num">{formatTime(elapsed)}</span>
             <span className="meta-lbl">elapsed</span>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 

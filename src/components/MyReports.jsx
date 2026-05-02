@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { fetchMyAttacks } from '../lib/debate.js';
+import ThemeToggle from './ThemeToggle.jsx';
 
 const VERDICT_COLOR = {
   KILL: 'red',
@@ -88,6 +89,7 @@ export default function MyReports({ onOpenAttack, onReset }) {
       <header className="myreports-header">
         <button className="btn-text" onClick={onReset} type="button">← Back</button>
         <div className="myreports-title">My Reports</div>
+        <ThemeToggle />
         <div className="myreports-meta">
           {address.slice(0, 6)}…{address.slice(-4)}
         </div>

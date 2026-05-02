@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAccount, useConnect, useConnectors, useDisconnect } from 'wagmi';
+import ThemeToggle from './ThemeToggle.jsx';
 import PaymentModal from './PaymentModal.jsx';
 
 export default function Landing({ onStart, onDemo, onViewPast, onShowMyReports, notice }) {
@@ -41,6 +42,7 @@ const handleStart = () => {
         </div>
         <div className="nav-meta">
           <span className="dot dot-live" /> system online
+          <ThemeToggle />
           <MyReportsLink onClick={onShowMyReports} />
           <WalletPill />
         </div>

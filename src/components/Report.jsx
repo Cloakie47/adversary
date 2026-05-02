@@ -11,6 +11,7 @@ import {
   requestAttestation,
 } from '../lib/debate.js';
 import PaymentModal from './PaymentModal.jsx';
+import ThemeToggle from './ThemeToggle.jsx';
 
 const AGENT_LANES = {
   'attacker-skeptic':      'Demand',
@@ -339,6 +340,7 @@ export default function Report({ attackId, agentOutputs, preloadedData, onReset 
           <div className="report-title">{titleFromAttack}</div>
         </div>
         <div className="report-tools">
+          <ThemeToggle />
           <LanguageSelector
             languages={LANGUAGES}
             current={currentLang}
