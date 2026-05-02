@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Landing from './components/Landing.jsx';
 import Processing from './components/Processing.jsx';
 import Report from './components/Report.jsx';
+import MyReports from './components/MyReports.jsx';
 import { DEMO_ATTACK_ID, fetchAttack } from './lib/debate.js';
 
 export default function App() {
@@ -23,6 +24,8 @@ export default function App() {
   const [landingNotice, setLandingNotice] = useState(null);
   // Endpoint choice for the live debate: /debate-fast (default) vs legacy /debate
   const [useFast, setUseFast] = useState(true);
+  // Payment token from the wallet → backend verification flow
+  const [paymentToken, setPaymentToken] = useState(null);
 
   // Keep the URL in sync with the active attack_id.
   const updateUrl = useCallback((id) => {
@@ -122,6 +125,7 @@ export default function App() {
     setResumeError(null);
     setLandingNotice(null);
     setUseFast(opts.fast !== false); // default fast unless explicitly opted out
+    setPaymentToken(opts.paymentToken || null);
     setView('processing');
   };
 
@@ -155,6 +159,11 @@ export default function App() {
     loadById(id.trim());
   };
 
+  const showMyReports = () => {
+    setLandingNotice(null);
+    setView('myreports');
+  };
+
   const reset = () => {
     setView('landing');
     setAttackId(null);
@@ -166,6 +175,7 @@ export default function App() {
     setResumeMode(false);
     setResumeError(null);
     setLandingNotice(null);
+    setPaymentToken(null);
     if (window.location.pathname !== '/' || window.location.search) {
       window.history.replaceState(null, '', '/');
     }
@@ -191,6 +201,7 @@ export default function App() {
           onStart={startLiveDebate}
           onDemo={startDemo}
           onViewPast={viewPastDebate}
+          onShowMyReports={showMyReports}
           notice={landingNotice}
         />
       )}
@@ -204,6 +215,7 @@ export default function App() {
           title={artifactTitle}
           artifactText={artifactText}
           fast={useFast}
+          paymentToken={paymentToken}
           onAttackId={handleAttackId}
           onComplete={handleDebateComplete}
           onReset={reset}
@@ -214,6 +226,12 @@ export default function App() {
           attackId={attackId}
           agentOutputs={agentOutputs}
           preloadedData={preloadedAttack}
+          onReset={reset}
+        />
+      )}
+      {view === 'myreports' && (
+        <MyReports
+          onOpenAttack={loadById}
           onReset={reset}
         />
       )}

@@ -10,8 +10,12 @@
     "preview": "vite preview --host"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.100.8",
+    "accounts": "^0.8.9",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "viem": "^2.48.7",
+    "wagmi": "^3.6.9"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

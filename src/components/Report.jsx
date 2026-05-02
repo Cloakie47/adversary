@@ -10,6 +10,7 @@ import {
   getPdfUrl,
   requestAttestation,
 } from '../lib/debate.js';
+import PaymentModal from './PaymentModal.jsx';
 
 const AGENT_LANES = {
   'attacker-skeptic':      'Demand',
@@ -61,6 +62,9 @@ export default function Report({ attackId, agentOutputs, preloadedData, onReset 
   // ----- attestation -----
   const [attestPending, setAttestPending] = useState(false);
   const attestTriggeredRef = useRef(false);
+
+  // ----- translation payment modal -----
+  const [pendingTranslationLang, setPendingTranslationLang] = useState(null);
 
   // Mirror preloadedData → state if it lands later
   useEffect(() => {
@@ -131,7 +135,7 @@ export default function Report({ attackId, agentOutputs, preloadedData, onReset 
   }, [attack, attackId, englishSections.attestation]);
 
   // ----- language change handler -----
-  const startTranslationStream = useCallback((lang) => {
+  const startTranslationStream = useCallback((lang, paymentToken) => {
     if (translationAbortRef.current) {
       try { translationAbortRef.current.abort(); } catch (_) {}
       translationAbortRef.current = null;
@@ -146,6 +150,7 @@ export default function Report({ attackId, agentOutputs, preloadedData, onReset 
     streamTranslation({
       attackId,
       lang,
+      paymentToken,
       signal: controller.signal,
       onEvent: ({ event, data: payload }) => {
         if (event === 'translation_start') {
@@ -212,12 +217,24 @@ export default function Report({ attackId, agentOutputs, preloadedData, onReset 
       return;
     }
     if (translationCache[lang]) {
-      // Client-side cache hit — instant, no network call
+      // Client-side cache hit — instant, no network call, no payment needed
       setTranslatingLang(null);
       return;
     }
-    startTranslationStream(lang);
-  }, [translationCache, startTranslationStream]);
+    if (availableTranslations.has(lang)) {
+      // Server-side cache hit — instant, no payment needed
+      startTranslationStream(lang, null);
+      return;
+    }
+    // Cold translation — open payment modal first
+    setPendingTranslationLang(lang);
+  }, [translationCache, availableTranslations, startTranslationStream]);
+
+  const handleTranslationPaid = useCallback(({ paymentToken }) => {
+    const lang = pendingTranslationLang;
+    setPendingTranslationLang(null);
+    if (lang) startTranslationStream(lang, paymentToken);
+  }, [pendingTranslationLang, startTranslationStream]);
 
   // Cleanup any in-flight translation on unmount
   useEffect(() => () => {
@@ -475,6 +492,19 @@ export default function Report({ attackId, agentOutputs, preloadedData, onReset 
           Built on Hermes Agent + Kimi K2.5 + Tempo MPP
         </div>
       </footer>
+
+      <PaymentModal
+        open={!!pendingTranslationLang}
+        onClose={() => {
+          setPendingTranslationLang(null);
+          setCurrentLang('en');
+        }}
+        onPaid={handleTranslationPaid}
+        amountUsd={0.10}
+        action="translation"
+        resourceId={attackId}
+        actionLabel={`Translate to ${LANGUAGES.find((l) => l.code === pendingTranslationLang)?.label || pendingTranslationLang}`}
+      />
     </div>
   );
 }

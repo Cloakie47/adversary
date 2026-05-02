@@ -35,6 +35,7 @@ export default function Processing({
   title,
   artifactText,
   fast = true,
+  paymentToken,
   onAttackId,
   onComplete,
   onReset,
@@ -117,6 +118,7 @@ export default function Processing({
               onEvent: handleEvent,
               signal: controller.signal,
               fast,
+              paymentToken,
             });
           }
           if (!completedRef.current && !cancelled) {

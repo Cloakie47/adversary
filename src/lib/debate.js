@@ -4,11 +4,13 @@ export const DEMO_ATTACK_ID = '3f456848-783f-402e-b507-2079c1ca17d8';
 
 // Stream a live debate. Defaults to POST /debate-fast (3-5 min).
 // Pass { fast: false } to use the legacy POST /debate (~25 min) endpoint.
-export async function streamDebate({ artifactText, artifactTitle, onEvent, signal, fast = true }) {
+export async function streamDebate({ artifactText, artifactTitle, onEvent, signal, fast = true, paymentToken }) {
   const path = fast ? '/debate-fast' : '/debate';
+  const headers = { 'Content-Type': 'application/json' };
+  if (paymentToken) headers['X-Payment-Token'] = paymentToken;
   const response = await fetch(`${BACKEND_URL}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ artifact_text: artifactText, artifact_title: artifactTitle }),
     signal,
   });
@@ -51,10 +53,12 @@ export async function fetchTranslations(attackId) {
 
 // Stream a translation via POST /translate/{id}?lang=…
 // Events: translation_start { cached }, translation_delta { text }, translation_complete
-export async function streamTranslation({ attackId, lang, onEvent, signal }) {
+export async function streamTranslation({ attackId, lang, onEvent, signal, paymentToken }) {
+  const headers = {};
+  if (paymentToken) headers['X-Payment-Token'] = paymentToken;
   const response = await fetch(
     `${BACKEND_URL}/translate/${attackId}?lang=${encodeURIComponent(lang)}`,
-    { method: 'POST', signal }
+    { method: 'POST', headers, signal }
   );
   if (!response.ok) {
     throw new Error(`Translation request failed: ${response.status} ${response.statusText}`);
@@ -385,6 +389,18 @@ export function readAgentOutput(agent, fallbackByName) {
     (fallbackByName != null ? fallbackByName : '') ||
     ''
   );
+}
+
+// Fetch list of attacks paid for by a wallet address.
+// Returns { wallet, count, attacks: [...] }
+export async function fetchMyAttacks(wallet, limit = 20) {
+  if (!wallet) throw new Error('wallet address required');
+  const url = `${BACKEND_URL}/my-attacks?wallet=${encodeURIComponent(wallet)}&limit=${limit}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`fetchMyAttacks failed: ${res.status} ${res.statusText}`);
+  }
+  return await res.json();
 }
 
 // Pretty role display from agent_name like "attacker-skeptic"
